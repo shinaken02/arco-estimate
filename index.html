@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>演奏料金シミュレーター｜演奏派遣アルコ</title>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --accent: #e67e22;
+      --accent-light: #f39c12;
+      --bg: #fafafa;
+      --card: #ffffff;
+      --border: #ddd;
+      --text: #333;
+      --text-light: #666;
+      --error: #e74c3c;
+      --success: #27ae60;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+    header {
+      background: linear-gradient(135deg, var(--primary), #34495e);
+      color: #fff;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: .05em; }
+    header p { font-size: .9rem; opacity: .8; margin-top: .3rem; }
+    .container { max-width: 720px; margin: 0 auto; padding: 1rem; }
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      border-left: 4px solid var(--accent);
+      padding-left: .6rem;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      font-size: .85rem;
+      font-weight: 600;
+      margin-bottom: .3rem;
+      color: var(--text-light);
+    }
+    select, input[type="text"] {
+      width: 100%;
+      padding: .6rem .8rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: .95rem;
+      background: #fff;
+      appearance: auto;
+      margin-bottom: .8rem;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(230,126,34,.15);
+    }
+    .checkbox-group { margin-bottom: .8rem; }
+    .checkbox-group label {
+      display: flex;
+      align-items: flex-start;
+      gap: .5rem;
+      font-weight: 400;
+      cursor: pointer;
+      font-size: .9rem;
+      color: var(--text);
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: 18px; height: 18px;
+      accent-color: var(--accent);
+      flex-shrink: 0;
+      margin-top: .25rem;
+    }
+    .btn-calc {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: opacity .2s;
+      margin-bottom: 1.2rem;
+    }
+    .btn-calc:hover { opacity: .9; }
+    .btn-calc:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-reset {
+      display: block;
+      width: 100%;
+      padding: .8rem;
+      background: var(--card);
+      color: var(--primary);
+      font-size: 1rem;
+      font-weight: 700;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all .2s;
+      margin-bottom: 1.2rem;
+    }
+    .btn-reset:hover { border-color: var(--primary); background: #f5f5f5; }
+    .error-msg {
+      color: var(--error);
+      font-size: .85rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    /* Result */
+    #result { display: none; }
+    #result.show { display: block; }
+
+    .result-box {
+      background: var(--card);
+      border: 2px solid var(--accent);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.2rem;
+    }
+    .result-title {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      padding-bottom: .8rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--accent);
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: .4rem 0;
+      font-size: .9rem;
+      flex-wrap: wrap;
+    }
+    .result-row .label { color: var(--text); }
+    .result-row .amount {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+    .result-divider {
+      border: none;
+      border-top: 2px solid var(--accent);
+      margin: .8rem 0;
+    }
+    .result-total {
+      text-align: center;
+      padding: .8rem 0 .3rem;
+    }
+    .result-total .total-label {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: .3rem;
+    }
+    .result-total .total-amount {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .result-notes {
+      margin-top: 1rem;
+      font-size: .8rem;
+      color: var(--text-light);
+      line-height: 1.8;
+    }
+    .result-notes p { margin-bottom: .2rem; }
+
+    .inquiry-box {
+      text-align: center;
+      margin-top: 1.2rem;
+      padding: 1.2rem;
+      background: #fff8f0;
+      border-radius: 10px;
+      border: 1px solid #f0d9c0;
+    }
+    .inquiry-box p {
+      font-size: .85rem;
+      color: var(--text-light);
+      margin-bottom: .6rem;
+    }
+    .inquiry-box a {
+      display: inline-block;
+      padding: .6rem 1.5rem;
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: .9rem;
+      transition: opacity .2s;
+    }
+    .inquiry-box a:hover { opacity: .85; }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: .75rem;
+      color: var(--text-light);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>演奏料金シミュレーター</h1>
+  <p>演奏派遣のお見積もり概算を確認できます</p>
+</header>
+
+<div class="container">
+
+  <!-- 1. 楽器構成 -->
+  <div class="section">
+    <h2 class="section-title">1. 楽器構成</h2>
+    <label for="ensemble">編成を選択してください</label>
+    <select id="ensemble">
+      <option value="">-- 選択 --</option>
+      <option value="1">ソロ（奏者1名）</option>
+      <option value="2">デュオ（奏者2名）</option>
+      <option value="3">トリオ（奏者3名）</option>
+      <option value="4">カルテット（奏者4名）</option>
+    </select>
+  </div>
+
+  <!-- 2. 演奏会場情報 -->
+  <div class="section">
+    <h2 class="section-title">2. 演奏会場情報</h2>
+
+    <label for="venueName">演奏会場名</label>
+    <input type="text" id="venueName" placeholder="例：○○ホール">
+
+    <label for="venueStation">最寄り駅</label>
+    <select id="venueStation">
+      <option value="">-- 選択 --</option>
+      <optgroup label="東京都">
+        <option value="東京駅">東京駅</option>
+        <option value="新宿駅">新宿駅</option>
+        <option value="品川駅">品川駅</option>
+        <option value="八王子駅">八王子駅</option>
+      </optgroup>
+      <optgroup label="神奈川県">
+        <option value="横浜駅">横浜駅</option>
+        <option value="川崎駅">川崎駅</option>
+        <option value="小田原駅">小田原駅</option>
+        <option value="厚木駅">厚木駅</option>
+      </optgroup>
+      <optgroup label="埼玉県">
+        <option value="大宮駅">大宮駅</option>
+        <option value="所沢駅">所沢駅</option>
+        <option value="川越駅">川越駅</option>
+        <option value="熊谷駅">熊谷駅</option>
+      </optgroup>
+      <optgroup label="千葉県">
+        <option value="千葉駅">千葉駅</option>
+        <option value="成田駅">成田駅</option>
+        <option value="木更津駅">木更津駅</option>
+        <option value="松戸駅">松戸駅</option>
+      </optgroup>
+      <optgroup label="群馬県">
+        <option value="高崎駅">高崎駅</option>
+        <option value="伊勢崎駅">伊勢崎駅</option>
+      </optgroup>
+      <optgroup label="栃木県">
+        <option value="宇都宮駅">宇都宮駅</option>
+        <option value="黒磯駅">黒磯駅</option>
+      </optgroup>
+      <optgroup label="茨城県">
+        <option value="水戸駅">水戸駅</option>
+        <option value="下館駅">下館駅</option>
+      </optgroup>
+    </select>
+
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="specialDiscount">
+        保育施設・教育機関・医療機関・福祉施設での演奏（特別割引適用）
+      </label>
+    </div>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="taxiNeeded">
+        会場が最寄り駅から徒歩10分以上（タクシー利用あり）
+      </label>
+    </div>
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" id="jasracFlag">
+        JASRAC著作権使用料が発生する可能性がある（流行曲・アニメ曲等の演奏）
+      </label>
+    </div>
+  </div>
+
+  <!-- 3. 希望演奏時間 -->
+  <div class="section">
+    <h2 class="section-title">3. 希望演奏時間</h2>
+    <label for="duration">演奏時間を選択してください</label>
+    <select id="duration">
+      <option value="">-- 選択 --</option>
+      <option value="30">30分</option>
+      <option value="45">45分</option>
+      <option value="60">60分</option>
+      <option value="75">75分</option>
+      <option value="90">90分</option>
+      <option value="120">120分</option>
+    </select>
+  </div>
+
+  <!-- 計算ボタン -->
+  <div class="error-msg" id="errorMsg"></div>
+  <button class="btn-calc" id="calcBtn">お見積もりを計算する</button>
+
+  <!-- 結果 -->
+  <div id="result">
+    <div class="result-box">
+      <div class="result-title">お見積り（概算）</div>
+      <div id="resultBody"></div>
+    </div>
+
+    <div class="inquiry-box">
+      <p>詳しいお見積もり・ご依頼はお気軽にお問い合わせください</p>
+      <a href="mailto:arco.ensouhaken@gmail.com">メールでお問い合わせ</a>
+    </div>
+
+    <button class="btn-reset" id="resetBtn">もう一度計算する</button>
+  </div>
+
+</div>
+
+<footer>演奏派遣アルコ｜演奏料金シミュレーター</footer>
+
+<script>
+// ===== データ定義 =====
+const PRICE_NORMAL = {
+  1: { 30:24200, 45:27500, 60:30800, 75:34100, 90:37400 },
+  2: { 30:48400, 45:55000, 60:61600, 75:68200, 90:74800 },
+  3: { 30:72600, 45:82500, 60:92400, 75:102300, 90:112200 },
+  4: { 30:74800, 45:88000, 60:101200, 75:114400, 90:127600, 120:154000 },
+};
+
+const PRICE_DISCOUNT = {
+  1: { 30:20900, 45:23100, 60:25300, 75:27500, 90:29700 },
+  2: { 30:41800, 45:46200, 60:50600, 75:55000, 90:59400 },
+  3: { 30:62700, 45:69300, 60:75900, 75:82500, 90:89100 },
+  4: { 30:66000, 45:74800, 60:83600, 75:92400, 90:101200, 120:118800 },
+};
+
+// 交通費マスター: [高MAX-ソロ, 高MAX-デュオ, 高MAX-トリオ, 高MAX-カルテット, 低MIN-ソロ, 低MIN-デュオ, 低MIN-トリオ, 低MIN-カルテット]
+const TRANSPORT = {
+  '東京駅':    [1440, 4240, 5920, 7540, 1440, 2140, 3880, 5500],
+  '新宿駅':    [1440, 4320, 5540, 7040, 1440, 1960, 3180, 4680],
+  '品川駅':    [1820, 3920, 5660, 7480, 1820, 2320, 4060, 5880],
+  '八王子駅':  [2080, 4540, 6020, 8280, 2080, 3260, 5080, 7160],
+  '横浜駅':    [2460, 4980, 6640, 8260, 2460, 2000, 3660, 5280],
+  '川崎駅':    [2080, 4340, 6000, 7660, 2080, 2300, 3960, 5620],
+  '小田原駅':  [4840, 9460, 11180, 14760, 4840, 3280, 5000, 8580],
+  '厚木駅':    [2480, 5020, 6060, 7820, 2480, 2340, 3900, 5660],
+  '大宮駅':    [420, 6440, 8720, 9240, 420, 860, 3140, 3660],
+  '所沢駅':    [1580, 6220, 8660, 10320, 1580, 2980, 5420, 7080],
+  '川越駅':    [880, 6540, 9140, 10380, 880, 2020, 4620, 5860],
+  '熊谷駅':    [1060, 8780, 12460, 14280, 1060, 2740, 6420, 8240],
+  '千葉駅':    [2820, 7200, 10240, 13140, 2820, 4900, 7940, 10840],
+  '成田駅':    [3200, 8780, 12820, 16080, 3200, 5220, 9260, 12520],
+  '木更津駅':  [4180, 10520, 15140, 19440, 4180, 7380, 12640, 16940],
+  '松戸駅':    [1820, 5700, 7900, 9780, 1820, 2880, 5080, 6960],
+  '高崎駅':    [7620, 24560, 34760, 42820, 7620, 15620, 25820, 33880],
+  '伊勢崎駅':  [8380, 26320, 37180, 46160, 8380, 17200, 28060, 37040],
+  '宇都宮駅':  [7620, 25440, 35640, 44020, 7620, 15680, 25880, 34260],
+  '黒磯駅':    [11180, 28400, 42220, 53840, 11180, 21960, 35900, 47520],
+  '水戸駅':    [7340, 19500, 28720, 36720, 7340, 15120, 24340, 32340],
+  '下館駅':    [7260, 20800, 30400, 38100, 7260, 12460, 22060, 29760],
+};
+
+const PRACTICE_COST = 4000;
+const TAXI_COST = 2000;
+const JASRAC_MAX = 3300; // 著作権使用料2,200 + 申請手数料1,100
+
+// ===== DOM =====
+const $ = id => document.getElementById(id);
+const $ensemble = $('ensemble');
+const $venueName = $('venueName');
+const $venueStation = $('venueStation');
+const $specialDiscount = $('specialDiscount');
+const $taxiNeeded = $('taxiNeeded');
+const $jasracFlag = $('jasracFlag');
+const $duration = $('duration');
+const $errorMsg = $('errorMsg');
+const $calcBtn = $('calcBtn');
+const $result = $('result');
+const $resultBody = $('resultBody');
+const $resetBtn = $('resetBtn');
+
+// ===== イベント =====
+$ensemble.addEventListener('change', updateDurationOptions);
+
+function updateDurationOptions() {
+  const count = parseInt($ensemble.value) || 0;
+  $duration.querySelectorAll('option').forEach(opt => {
+    if (opt.value === '120') {
+      opt.disabled = count !== 4;
+      if (count !== 4 && $duration.value === '120') $duration.value = '';
+    }
+    if (['30','45','60','75','90'].includes(opt.value)) {
+      opt.disabled = false;
+    }
+  });
+}
+
+// ===== 計算 =====
+$calcBtn.addEventListener('click', calculate);
+
+function showError(msg) {
+  $errorMsg.textContent = msg;
+  $errorMsg.style.display = 'block';
+  $result.classList.remove('show');
+}
+
+function fmt(n) { return n.toLocaleString(); }
+
+function calculate() {
+  $errorMsg.style.display = 'none';
+
+  const ensembleCount = parseInt($ensemble.value);
+  if (!ensembleCount) return showError('楽器構成を選択してください。');
+
+  const station = $venueStation.value;
+  if (!station) return showError('最寄り駅を選択してください。');
+
+  const duration = parseInt($duration.value);
+  if (!duration) return showError('希望演奏時間を選択してください。');
+
+  const isDiscount = $specialDiscount.checked;
+  const priceTable = isDiscount ? PRICE_DISCOUNT : PRICE_NORMAL;
+  const performancePrice = priceTable[ensembleCount]?.[duration];
+  if (performancePrice === undefined) {
+    return showError('選択された構成と演奏時間の組み合わせは対応していません（ソロ〜トリオは120分非対応）。');
+  }
+
+  // 交通費
+  const td = TRANSPORT[station];
+  const idx = ensembleCount - 1; // 0:ソロ, 1:デュオ, 2:トリオ, 3:カルテット
+  const transportMax = td[idx];     // 高MAX
+  const transportMin = td[idx + 4]; // 低MIN
+
+  // タクシー代
+  const taxi = $taxiNeeded.checked ? TAXI_COST : 0;
+
+  // JASRAC
+  const isJasrac = $jasracFlag.checked;
+
+  // 合計計算
+  const totalMin = performancePrice + transportMin + PRACTICE_COST + taxi + (isJasrac ? 0 : 0);
+  const totalMax = performancePrice + transportMax + PRACTICE_COST + taxi + (isJasrac ? JASRAC_MAX : 0);
+
+  // ===== 結果表示 =====
+  let html = '';
+
+  html += '<div style="font-size:.85rem;font-weight:600;color:var(--text-light);margin-bottom:.6rem;">【内訳】</div>';
+
+  // ① 演奏料金
+  html += `<div class="result-row">
+    <span class="label">① 演奏料金</span>
+    <span class="amount">${fmt(performancePrice)}円</span>
+  </div>`;
+
+  // ② 交通費
+  if (transportMin === transportMax) {
+    html += `<div class="result-row">
+      <span class="label">② 交通費（概算）</span>
+      <span class="amount">${fmt(transportMin)}円</span>
+    </div>`;
+  } else {
+    html += `<div class="result-row">
+      <span class="label">② 交通費（概算）</span>
+      <span class="amount">${fmt(transportMin)}円 〜 ${fmt(transportMax)}円</span>
+    </div>`;
+  }
+
+  // ③ 練習費用
+  html += `<div class="result-row">
+    <span class="label">③ 練習費用（固定）</span>
+    <span class="amount">${fmt(PRACTICE_COST)}円</span>
+  </div>`;
+
+  // ④ タクシー代
+  if (taxi > 0) {
+    html += `<div class="result-row">
+      <span class="label">④ タクシー代</span>
+      <span class="amount">${fmt(taxi)}円</span>
+    </div>`;
+  }
+
+  // ⑤ JASRAC費用
+  if (isJasrac) {
+    html += `<div class="result-row">
+      <span class="label">⑤ JASRAC費用</span>
+      <span class="amount">0円 〜 ${fmt(JASRAC_MAX)}円</span>
+    </div>`;
+  }
+
+  // 合計
+  html += '<hr class="result-divider">';
+  html += '<div class="result-total">';
+  html += '<div class="total-label">合計（税込）</div>';
+  if (totalMin === totalMax) {
+    html += `<div class="total-amount">${fmt(totalMin)}円</div>`;
+  } else {
+    html += `<div class="total-amount">${fmt(totalMin)}円 〜 ${fmt(totalMax)}円</div>`;
+  }
+  html += '</div>';
+
+  // 注記
+  html += '<div class="result-notes">';
+  html += '<p>※交通費は奏者の組み合わせにより変動します。</p>';
+  html += '<p>※本見積もりは概算です。詳細はお問い合わせください。</p>';
+  if (isDiscount) {
+    html += '<p>※保育施設・教育機関・医療機関・福祉施設向け特別割引が適用されています。</p>';
+  }
+  html += '</div>';
+
+  $resultBody.innerHTML = html;
+  $result.classList.add('show');
+  $result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ===== リセット =====
+$resetBtn.addEventListener('click', () => {
+  $ensemble.value = '';
+  $venueName.value = '';
+  $venueStation.value = '';
+  $specialDiscount.checked = false;
+  $taxiNeeded.checked = false;
+  $jasracFlag.checked = false;
+  $duration.value = '';
+  $errorMsg.style.display = 'none';
+  $result.classList.remove('show');
+  updateDurationOptions();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
+
+</body>
+</html>
