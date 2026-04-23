@@ -247,9 +247,6 @@
   <div class="section">
     <h2 class="section-title">2. 演奏会場情報</h2>
 
-    <label for="venueName">演奏会場名</label>
-    <input type="text" id="venueName" placeholder="例：○○ホール">
-
     <label for="venueStation">最寄り駅</label>
     <select id="venueStation">
       <option value="" disabled selected>該当の駅に一番近い駅を選択ください。対象の駅がない場合には別途お見積もり致しますので問い合わせください。</option>
@@ -421,7 +418,6 @@ const JASRAC_MAX = 3300; // 著作権使用料2,200 + 申請手数料1,100
 // ===== DOM =====
 const $ = id => document.getElementById(id);
 const $ensemble = $('ensemble');
-const $venueName = $('venueName');
 const $venueStation = $('venueStation');
 const $specialDiscount = $('specialDiscount');
 const $taxiNeeded = $('taxiNeeded');
@@ -467,7 +463,6 @@ function fmt(n) { return n.toLocaleString(); }
 
 function resetForm() {
   $ensemble.value = '';
-  $venueName.value = '';
   $venueStation.selectedIndex = 0;
   $specialDiscount.checked = false;
   $taxiNeeded.checked = false;
