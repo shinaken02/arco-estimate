@@ -252,7 +252,7 @@
 
     <label for="venueStation">最寄り駅</label>
     <select id="venueStation">
-      <option value="">-- 選択 --</option>
+      <option value="" disabled selected>該当の駅に一番近い駅を選択ください。対象の駅がない場合には別途お見積もり致しますので問い合わせください。</option>
       <optgroup label="東京都">
         <option value="東京駅">東京駅</option>
         <option value="新宿駅">新宿駅</option>
@@ -289,6 +289,7 @@
         <option value="水戸駅">水戸駅</option>
         <option value="下館駅">下館駅</option>
       </optgroup>
+      <option value="other">該当の駅がない（別途お見積もり）</option>
     </select>
 
     <div class="checkbox-group">
@@ -330,6 +331,16 @@
   <div class="error-msg" id="errorMsg"></div>
   <button class="btn-calc" id="calcBtn">お見積もりを計算する</button>
 
+  <!-- 該当駅なしメッセージ -->
+  <div id="noStationMsg" style="display:none;">
+    <div class="inquiry-box" style="margin-top:0;">
+      <p style="font-size:.9rem;color:var(--text);font-weight:600;margin-bottom:.4rem;">対象の駅がリストにない場合は、別途お見積もりいたします。</p>
+      <p>お手数ですが、以下のお問い合わせフォームよりご連絡ください。</p>
+      <a href="https://m-d-arco.jimdofree.com/%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B/" target="_blank" rel="noopener">お問い合わせフォームへ</a>
+    </div>
+    <button class="btn-reset" id="resetBtnNoStation">もう一度計算する</button>
+  </div>
+
   <!-- 結果 -->
   <div id="result">
     <div class="result-box">
@@ -337,9 +348,21 @@
       <div id="resultBody"></div>
     </div>
 
+    <!-- 備考 -->
+    <div class="result-box" id="remarksBox">
+      <div style="font-size:.85rem;font-weight:600;color:var(--text-light);margin-bottom:.6rem;">【備考】</div>
+      <div style="font-size:.9rem;font-weight:700;color:var(--primary);margin-bottom:.5rem;">待機料金について</div>
+      <div style="font-size:.85rem;line-height:1.8;color:var(--text);">
+        <p>演奏開始の1時間前より早く会場入りが必要な場合や、演奏と演奏の間があり控室待機が発生する場合に適用となります。</p>
+        <p style="margin-top:.3rem;">1時間につき、1人1,100円</p>
+        <p id="waitExample"></p>
+        <p style="font-size:.8rem;color:var(--text-light);margin-top:.3rem;">※待機時間が30分を超えた時点で1時間分の待機料金が発生致します。</p>
+      </div>
+    </div>
+
     <div class="inquiry-box">
       <p>詳しいお見積もり・ご依頼はお気軽にお問い合わせください</p>
-      <a href="mailto:arco.ensouhaken@gmail.com">メールでお問い合わせ</a>
+      <a href="https://m-d-arco.jimdofree.com/%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B/" target="_blank" rel="noopener">お問い合わせフォームへ</a>
     </div>
 
     <button class="btn-reset" id="resetBtn">もう一度計算する</button>
@@ -426,6 +449,10 @@ function updateDurationOptions() {
   });
 }
 
+// ===== DOM (追加) =====
+const $noStationMsg = $('noStationMsg');
+const $waitExample = $('waitExample');
+
 // ===== 計算 =====
 $calcBtn.addEventListener('click', calculate);
 
@@ -433,18 +460,43 @@ function showError(msg) {
   $errorMsg.textContent = msg;
   $errorMsg.style.display = 'block';
   $result.classList.remove('show');
+  $noStationMsg.style.display = 'none';
 }
 
 function fmt(n) { return n.toLocaleString(); }
 
+function resetForm() {
+  $ensemble.value = '';
+  $venueName.value = '';
+  $venueStation.selectedIndex = 0;
+  $specialDiscount.checked = false;
+  $taxiNeeded.checked = false;
+  $jasracFlag.checked = false;
+  $duration.value = '';
+  $errorMsg.style.display = 'none';
+  $result.classList.remove('show');
+  $noStationMsg.style.display = 'none';
+  updateDurationOptions();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function calculate() {
   $errorMsg.style.display = 'none';
+  $noStationMsg.style.display = 'none';
+  $result.classList.remove('show');
 
   const ensembleCount = parseInt($ensemble.value);
   if (!ensembleCount) return showError('楽器構成を選択してください。');
 
   const station = $venueStation.value;
   if (!station) return showError('最寄り駅を選択してください。');
+
+  // 「該当の駅がない」選択時
+  if (station === 'other') {
+    $noStationMsg.style.display = 'block';
+    $noStationMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
 
   const duration = parseInt($duration.value);
   if (!duration) return showError('希望演奏時間を選択してください。');
@@ -458,9 +510,9 @@ function calculate() {
 
   // 交通費
   const td = TRANSPORT[station];
-  const idx = ensembleCount - 1; // 0:ソロ, 1:デュオ, 2:トリオ, 3:カルテット
-  const transportMax = td[idx];     // 高MAX
-  const transportMin = td[idx + 4]; // 低MIN
+  const idx = ensembleCount - 1;
+  const transportMax = td[idx];
+  const transportMin = td[idx + 4];
 
   // タクシー代
   const taxi = $taxiNeeded.checked ? TAXI_COST : 0;
@@ -468,9 +520,13 @@ function calculate() {
   // JASRAC
   const isJasrac = $jasracFlag.checked;
 
-  // 合計計算
-  const totalMin = performancePrice + transportMin + PRACTICE_COST + taxi + (isJasrac ? 0 : 0);
-  const totalMax = performancePrice + transportMax + PRACTICE_COST + taxi + (isJasrac ? JASRAC_MAX : 0);
+  // 諸経費 = 交通費 + 練習費用 + タクシー代
+  const miscMin = transportMin + PRACTICE_COST + taxi;
+  const miscMax = transportMax + PRACTICE_COST + taxi;
+
+  // 合計
+  const totalMin = performancePrice + miscMin;
+  const totalMax = performancePrice + miscMax + (isJasrac ? JASRAC_MAX : 0);
 
   // ===== 結果表示 =====
   let html = '';
@@ -483,37 +539,23 @@ function calculate() {
     <span class="amount">${fmt(performancePrice)}円</span>
   </div>`;
 
-  // ② 交通費
-  if (transportMin === transportMax) {
+  // ② 諸経費（概算）
+  if (miscMin === miscMax) {
     html += `<div class="result-row">
-      <span class="label">② 交通費（概算）</span>
-      <span class="amount">${fmt(transportMin)}円</span>
+      <span class="label">② 諸経費（概算）</span>
+      <span class="amount">${fmt(miscMin)}円</span>
     </div>`;
   } else {
     html += `<div class="result-row">
-      <span class="label">② 交通費（概算）</span>
-      <span class="amount">${fmt(transportMin)}円 〜 ${fmt(transportMax)}円</span>
+      <span class="label">② 諸経費（概算）</span>
+      <span class="amount">${fmt(miscMin)}円 〜 ${fmt(miscMax)}円</span>
     </div>`;
   }
 
-  // ③ 練習費用
-  html += `<div class="result-row">
-    <span class="label">③ 練習費用（固定）</span>
-    <span class="amount">${fmt(PRACTICE_COST)}円</span>
-  </div>`;
-
-  // ④ タクシー代
-  if (taxi > 0) {
-    html += `<div class="result-row">
-      <span class="label">④ タクシー代</span>
-      <span class="amount">${fmt(taxi)}円</span>
-    </div>`;
-  }
-
-  // ⑤ JASRAC費用
+  // ③ JASRAC費用
   if (isJasrac) {
     html += `<div class="result-row">
-      <span class="label">⑤ JASRAC費用</span>
+      <span class="label">③ JASRAC費用</span>
       <span class="amount">0円 〜 ${fmt(JASRAC_MAX)}円</span>
     </div>`;
   }
@@ -531,7 +573,7 @@ function calculate() {
 
   // 注記
   html += '<div class="result-notes">';
-  html += '<p>※交通費は奏者の組み合わせにより変動します。</p>';
+  html += '<p>※諸経費は奏者の組み合わせや交通手段により変動します。</p>';
   html += '<p>※本見積もりは概算です。詳細はお問い合わせください。</p>';
   if (isDiscount) {
     html += '<p>※保育施設・教育機関・医療機関・福祉施設向け特別割引が適用されています。</p>';
@@ -539,24 +581,17 @@ function calculate() {
   html += '</div>';
 
   $resultBody.innerHTML = html;
+
+  // 備考の待機料金例を更新
+  $waitExample.textContent = `例：60分の待機：${fmt(ensembleCount * 1100)}円`;
+
   $result.classList.add('show');
   $result.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ===== リセット =====
-$resetBtn.addEventListener('click', () => {
-  $ensemble.value = '';
-  $venueName.value = '';
-  $venueStation.value = '';
-  $specialDiscount.checked = false;
-  $taxiNeeded.checked = false;
-  $jasracFlag.checked = false;
-  $duration.value = '';
-  $errorMsg.style.display = 'none';
-  $result.classList.remove('show');
-  updateDurationOptions();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
+$resetBtn.addEventListener('click', resetForm);
+$('resetBtnNoStation').addEventListener('click', resetForm);
 </script>
 
 </body>
