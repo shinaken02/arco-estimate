@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>演奏派遣料金シミュレーター｜演奏派遣アルコ</title>
+  <title>演奏派遣アルコ料金シミュレーター</title>
   <style>
     :root {
       --primary: #2c3e50;
@@ -117,6 +117,39 @@
       margin-bottom: 1.2rem;
     }
     .btn-reset:hover { border-color: var(--primary); background: #f5f5f5; }
+    /* 楽器構成の説明（一覧表示） */
+    .ensemble-guide {
+      margin-top: .4rem;
+      padding: 1rem;
+      background: #fff8f0;
+      border: 1px solid #f0d9c0;
+      border-radius: 8px;
+    }
+    .ensemble-guide-heading {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--text-light);
+      margin-bottom: .8rem;
+    }
+    .ensemble-desc-item + .ensemble-desc-item {
+      margin-top: .9rem;
+      padding-top: .9rem;
+      border-top: 1px solid #f0d9c0;
+    }
+    .ensemble-desc-title {
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--primary);
+      border-left: 3px solid var(--accent);
+      padding-left: .5rem;
+      margin-bottom: .3rem;
+    }
+    .ensemble-desc-body {
+      font-size: .85rem;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
     .error-msg {
       color: var(--error);
       font-size: .85rem;
@@ -224,7 +257,7 @@
 <body>
 
 <header>
-  <h1>演奏派遣料金シミュレーター</h1>
+  <h1>演奏派遣アルコ料金シミュレーター</h1>
   <p>演奏派遣のお見積もり概算を確認できます</p>
 </header>
 
@@ -241,6 +274,25 @@
       <option value="3">トリオ（奏者3名）</option>
       <option value="4">カルテット（奏者4名）</option>
     </select>
+    <div class="ensemble-guide">
+      <div class="ensemble-guide-heading">【各編成のご説明】</div>
+      <div class="ensemble-desc-item">
+        <div class="ensemble-desc-title">ソロ（奏者1名）</div>
+        <p class="ensemble-desc-body">ヴァイオリン1本と伴奏音源を基本とする、比較的リーズナブルな編成です。演奏に必要なスペースが少なく、椅子を設置できない場所にも対応しやすいため、レストランでのお食事中の演奏や小規模な会場におすすめです。</p>
+      </div>
+      <div class="ensemble-desc-item">
+        <div class="ensemble-desc-title">デュオ（奏者2名）</div>
+        <p class="ensemble-desc-body">比較的リーズナブルでありながら、二つの楽器による生演奏の華やかさを楽しめる編成です。狭いスペースでも演奏しやすく、保育園でのイベントや子ども向けの催しにもおすすめです。曲目は編成に合わせたものとなるため、選べる曲の種類はやや限られます。</p>
+      </div>
+      <div class="ensemble-desc-item">
+        <div class="ensemble-desc-title">トリオ（奏者3名）</div>
+        <p class="ensemble-desc-body">ヴァイオリン、ヴィオラ、チェロによる弦楽三重奏を基本とした編成です。三つの音色が重なり、ソロやデュオよりも豊かで落ち着いた響きをお楽しみいただけます。演奏できる曲目は編成に合わせたものとなるため、カルテットと比べると選択肢はやや少なめです。</p>
+      </div>
+      <div class="ensemble-desc-item">
+        <div class="ensemble-desc-title">カルテット（奏者4名）</div>
+        <p class="ensemble-desc-body">ヴァイオリン2本、ヴィオラ、チェロによる弦楽四重奏です。高音から低音までのバランスがよく、華やかさと重厚感を兼ね備えた、最もおすすめの基本編成です。曲目の選択肢も豊富で、体育館のような広い会場から宴会場まで、幅広いシーンで本格的な生演奏をお楽しみいただけます。</p>
+      </div>
+    </div>
   </div>
 
   <!-- 2. 演奏会場情報 -->
@@ -367,7 +419,7 @@
 
 </div>
 
-<footer>演奏派遣アルコ｜演奏派遣料金シミュレーター</footer>
+<footer>演奏派遣アルコ料金シミュレーター</footer>
 
 <script>
 // ===== データ定義 =====
@@ -412,7 +464,7 @@ const TRANSPORT = {
 };
 
 const PRACTICE_COST = 4000;
-const TAXI_COST = 2000;
+const TAXI_COST = 4000; // 往復
 const JASRAC_MAX = 3300; // 著作権使用料2,200 + 申請手数料1,100
 
 // ===== DOM =====
